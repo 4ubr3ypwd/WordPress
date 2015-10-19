@@ -1,11 +1,19 @@
 <?php
 /**
- * Plugin Installer List Table class.
+ * List Table API: WP_Plugin_Install_List_Table class
  *
  * @package WordPress
- * @subpackage List_Table
+ * @subpackage Administration
+ * @since 3.1.0
+ */
+
+/**
+ * Core class used to implement displaying plugins to install in a list table.
+ *
  * @since 3.1.0
  * @access private
+ *
+ * @see WP_List_Table
  */
 class WP_Plugin_Install_List_Table extends WP_List_Table {
 
@@ -496,12 +504,12 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 		<div class="plugin-card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
 			<div class="plugin-card-top">
 				<div class="name column-name">
-					<h4>
+					<h3>
 						<a href="<?php echo esc_url( $details_link ); ?>" class="thickbox">
 						<?php echo $title; ?>
 						<img src="<?php echo esc_attr( $plugin_icon_url ) ?>" class="plugin-icon" alt="">
 						</a>
-					</h4>
+					</h3>
 				</div>
 				<div class="action-links">
 					<?php

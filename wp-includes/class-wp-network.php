@@ -145,7 +145,7 @@ class WP_Network {
 		}
 
 		$default = ucfirst( $this->domain );
-		$this->site_name = get_network_option( 'site_name', $default, $this->id );
+		$this->site_name = get_network_option( $this->id, 'site_name', $default );
 	}
 
 	/**
@@ -209,13 +209,13 @@ class WP_Network {
 		if ( wp_using_ext_object_cache() ) {
 			$using_paths = wp_cache_get( 'networks_have_paths', 'site-options' );
 			if ( false === $using_paths ) {
-				$using_paths = $wpdb->get_var( "SELECT id FROM {$wpdb->site} WHERE path <> '/' LIMIT 1" );
-				wp_cache_add( 'networks_have_paths', (int) $using_paths, 'site-options'  );
+				$using_paths = (int) $wpdb->get_var( "SELECT id FROM {$wpdb->site} WHERE path <> '/' LIMIT 1" );
+				wp_cache_add( 'networks_have_paths', $using_paths, 'site-options'  );
 			}
 		}
 
 		$paths = array();
-		if ( true === $using_paths ) {
+		if ( $using_paths ) {
 			$path_segments = array_filter( explode( '/', trim( $path, '/' ) ) );
 
 			/**
@@ -272,7 +272,7 @@ class WP_Network {
 
 		$search_domains = "'" . implode( "', '", $wpdb->_escape( $domains ) ) . "'";
 
-		if ( false === $using_paths ) {
+		if ( ! $using_paths ) {
 			$network = $wpdb->get_row( "
 				SELECT * FROM {$wpdb->site}
 				WHERE domain IN ({$search_domains})

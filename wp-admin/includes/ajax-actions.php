@@ -1,9 +1,10 @@
 <?php
 /**
- * WordPress Core Ajax Handlers.
+ * Administration API: Core Ajax handlers
  *
  * @package WordPress
  * @subpackage Administration
+ * @since 2.1.0
  */
 
 //
@@ -2801,7 +2802,8 @@ function wp_ajax_query_themes() {
 		$theme->author      = wp_kses( $theme->author, $themes_allowedtags );
 		$theme->version     = wp_kses( $theme->version, $themes_allowedtags );
 		$theme->description = wp_kses( $theme->description, $themes_allowedtags );
-		$theme->num_ratings = sprintf( _n( '(based on %s rating)', '(based on %s ratings)', $theme->num_ratings ), number_format_i18n( $theme->num_ratings ) );
+		$theme->stars       = wp_star_rating( array( 'rating' => $theme->rating, 'type' => 'percent', 'number' => $theme->num_ratings, 'echo' => false ) );
+		$theme->num_ratings = number_format_i18n( $theme->num_ratings );
 		$theme->preview_url = set_url_scheme( $theme->preview_url );
 	}
 

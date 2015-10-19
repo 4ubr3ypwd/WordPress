@@ -171,7 +171,12 @@ function date_i18n( $dateformatstring, $unixtimestamp = false, $gmt = false ) {
  */
 function number_format_i18n( $number, $decimals = 0 ) {
 	global $wp_locale;
-	$formatted = number_format( $number, absint( $decimals ), $wp_locale->number_format['decimal_point'], $wp_locale->number_format['thousands_sep'] );
+
+	if ( isset( $wp_locale ) ) {
+		$formatted = number_format( $number, absint( $decimals ), $wp_locale->number_format['decimal_point'], $wp_locale->number_format['thousands_sep'] );
+	} else {
+		$formatted = number_format( $number, absint( $decimals ) );
+	}
 
 	/**
 	 * Filter the number formatted based on the locale.
@@ -495,7 +500,7 @@ function wp_extract_urls( $content ) {
  *
  * @since 1.5.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $content Post Content.
  * @param int    $post_ID Post ID.
@@ -1153,20 +1158,23 @@ function do_feed() {
 	if ( $feed == '' || $feed == 'feed' )
 		$feed = get_default_feed();
 
-	$hook = 'do_feed_' . $feed;
-	if ( ! has_action( $hook ) )
+	if ( ! has_action( "do_feed_{$feed}" ) ) {
 		wp_die( __( 'ERROR: This is not a valid feed template.' ), '', array( 'response' => 404 ) );
+	}
 
 	/**
 	 * Fires once the given feed is loaded.
 	 *
-	 * The dynamic hook name, $hook, refers to the feed name.
+	 * The dynamic portion of the hook name, `$feed`, refers to the feed template name.
+	 * Possible values include: 'rdf', 'rss', 'rss2', and 'atom'.
 	 *
 	 * @since 2.1.0
+	 * @since 4.4.0 The `$feed` parameter was added.
 	 *
-	 * @param bool $is_comment_feed Whether the feed is a comment feed.
+	 * @param bool   $is_comment_feed Whether the feed is a comment feed.
+	 * @param string $feed            The feed name.
 	 */
-	do_action( $hook, $wp_query->is_comment_feed );
+	do_action( "do_feed_{$feed}", $wp_query->is_comment_feed, $feed );
 }
 
 /**
@@ -1249,6 +1257,7 @@ function do_robots() {
 		$site_url = parse_url( site_url() );
 		$path = ( !empty( $site_url['path'] ) ) ? $site_url['path'] : '';
 		$output .= "Disallow: $path/wp-admin/\n";
+		$output .= "Allow: $path/wp-admin/admin-ajax.php\n";
 	}
 
 	/**
@@ -4308,7 +4317,7 @@ function _cleanup_header_comment( $str ) {
  *
  * @since 2.9.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  */
 function wp_scheduled_delete() {
 	global $wpdb;

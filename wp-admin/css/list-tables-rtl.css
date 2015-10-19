@@ -881,6 +881,11 @@ p.pagenav {
 	padding: 2px 0 0;
 }
 
+.row-actions .network_only,
+.row-actions .network_active {
+	color: #000;
+}
+
 tr:hover .row-actions,
 .mobile .row-actions,
 .row-actions.visible,
@@ -983,11 +988,19 @@ tr.inline-edit-row td,
 }
 
 /*	Positioning */
-.inline-edit-row h4 {
-	margin: .2em 0;
-	padding: 0;
+
+/* Needs higher specificity for the padding */
+#the-list .inline-edit-row .inline-edit-legend {
+	margin: 0;
+	padding: 0.2em 0.5em 0;
 	line-height: 2.5;
+	font-weight: 600;
 }
+
+#the-list #bulk-edit.inline-edit-row .inline-edit-legend {
+	padding: 0.2em 0.5em;
+}
+
 .inline-edit-row fieldset span.title,
 .inline-edit-row fieldset span.checkbox-title {
 	margin: 0;
@@ -1077,7 +1090,7 @@ tr.inline-edit-row td,
 }
 
 /*	Styling */
-.inline-edit-row h4 {
+.inline-edit-row .inline-edit-legend {
 	text-transform: uppercase;
 }
 
@@ -1436,11 +1449,11 @@ tr.active + tr.plugin-update-tr:not(.updated) .plugin-update .update-message {
 	background-color: #fcf3ef;
 }
 
-.plugin-install-php h3 {
+.plugin-install-php h2 {
 	clear: both;
 }
 
-.plugin-install-php h4 {
+.plugin-install-php h3 {
 	margin: 2.5em 0 8px;
 }
 
@@ -1517,7 +1530,7 @@ div.action-links,
 	margin: 0; /* Override existing margins */
 }
 
-.plugin-card h4 {
+.plugin-card h3 {
 	margin: 0 0 12px;
 	font-size: 18px;
 	line-height: 1.3;

@@ -274,7 +274,7 @@ function wp_validate_logged_in_cookie( $user_id ) {
  * @since 4.3.0 Added `$public_only` argument. Added the ability to pass an array
  *              of post types to `$post_type`.
  *
- * @global wpdb $wpdb WordPress database object for queries.
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int          $userid      User ID.
  * @param array|string $post_type   Optional. Single post type or array of post types to count the number of posts for. Default 'post'.
@@ -308,7 +308,7 @@ function count_user_posts( $userid, $post_type = 'post', $public_only = false ) 
  *
  * @since 3.0.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param array        $users       Array of user IDs.
  * @param string|array $post_type   Optional. Single post type or array of post types to check. Defaults to 'post'.
@@ -368,7 +368,7 @@ function get_current_user_id() {
  *
  * @since 2.0.0
  *
- * @global wpdb $wpdb WordPress database object for queries.
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $option     User option name.
  * @param int    $user       Optional. User ID.
@@ -420,7 +420,7 @@ function get_user_option( $option, $user = 0, $deprecated = '' ) {
  *
  * @since 2.0.0
  *
- * @global wpdb $wpdb WordPress database object for queries.
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int    $user_id     User ID.
  * @param string $option_name User option name.
@@ -448,7 +448,7 @@ function update_user_option( $user_id, $option_name, $newvalue, $global = false 
  *
  * @since 3.0.0
  *
- * @global wpdb $wpdb WordPress database object for queries.
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int    $user_id     User ID
  * @param string $option_name User option name.
@@ -490,7 +490,7 @@ function get_users( $args = array() ) {
  *
  * @since 3.0.0
  *
- * @global wpdb $wpdb WordPress database object for queries.
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int  $user_id User ID
  * @param bool $all     Whether to retrieve all blogs, or only blogs that are not
@@ -735,8 +735,9 @@ function update_user_meta($user_id, $meta_key, $meta_value, $prev_value = '') {
  * Using $strategy = 'memory' this is memory-intensive and should handle around 10^5 users, but see WP Bug #12257.
  *
  * @since 3.0.0
+ * @since 4.4.0 The number of users with no role is now included in the `none` element.
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $strategy 'time' or 'memory'
  * @return array Includes a grand total and an array of counts indexed by role strings.
@@ -775,10 +776,14 @@ function count_users($strategy = 'time') {
 		// Get the meta_value index from the end of the result set.
 		$total_users = (int) $row[$col];
 
+		$role_counts['none'] = ( $total_users - array_sum( $role_counts ) );
+
 		$result['total_users'] = $total_users;
 		$result['avail_roles'] =& $role_counts;
 	} else {
-		$avail_roles = array();
+		$avail_roles = array(
+			'none' => 0,
+		);
 
 		$users_of_blog = $wpdb->get_col( "SELECT meta_value FROM $wpdb->usermeta WHERE meta_key = '{$blog_prefix}capabilities'" );
 
@@ -786,6 +791,9 @@ function count_users($strategy = 'time') {
 			$b_roles = maybe_unserialize($caps_meta);
 			if ( ! is_array( $b_roles ) )
 				continue;
+			if ( empty( $b_roles ) ) {
+				$avail_roles['none']++;
+			}
 			foreach ( $b_roles as $b_role => $val ) {
 				if ( isset($avail_roles[$b_role]) ) {
 					$avail_roles[$b_role]++;
@@ -797,6 +805,10 @@ function count_users($strategy = 'time') {
 
 		$result['total_users'] = count( $users_of_blog );
 		$result['avail_roles'] =& $avail_roles;
+	}
+
+	if ( is_multisite() ) {
+		$result['avail_roles']['none'] = 0;
 	}
 
 	return $result;
@@ -1218,7 +1230,7 @@ function validate_username( $username ) {
  * @since 3.6.0 The `aim`, `jabber`, and `yim` fields were removed as default user contact
  *              methods for new installs. See wp_get_user_contact_methods().
  *
- * @global wpdb $wpdb WordPress database object for queries.
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param array|object|WP_User $userdata {
  *     An array, object, or WP_User object of user data arguments.
@@ -1302,6 +1314,17 @@ function wp_insert_user( $userdata ) {
 	if ( ! $update && username_exists( $user_login ) ) {
 		return new WP_Error( 'existing_user_login', __( 'Sorry, that username already exists!' ) );
 	}
+
+	/**
+	 * Filter the list of blacklisted usernames.
+	 *
+	 * @since 4.4.0
+	 *
+	 * @param array $usernames Array of blacklisted usernames.
+	 */
+	if ( in_array( $user_login, apply_filters( 'illegal_user_logins', array() ) ) ) {
+		return new WP_Error( 'illegal_user_login', __( 'Sorry, that username is not allowed.' ) );
+	}	
 
 	/*
 	 * If a nicename is provided, remove unsafe user characters before using it.
@@ -1590,7 +1613,7 @@ function wp_update_user($userdata) {
 	// Escape data pulled from DB.
 	$user = add_magic_quotes( $user );
 
-	if ( ! empty($userdata['user_pass']) ) {
+	if ( ! empty( $userdata['user_pass'] ) && $userdata['user_pass'] !== $user_obj->user_pass ) {
 		// If password is changing, hash it now
 		$plaintext_pass = $userdata['user_pass'];
 		$userdata['user_pass'] = wp_hash_password( $userdata['user_pass'] );
@@ -2230,4 +2253,33 @@ function wp_destroy_other_sessions() {
 function wp_destroy_all_sessions() {
 	$manager = WP_Session_Tokens::get_instance( get_current_user_id() );
 	$manager->destroy_all();
+}
+
+/**
+ * Get the user IDs of all users with no role on this site.
+ *
+ * This function returns an empty array when used on Multisite.
+ *
+ * @since 4.4.0
+ *
+ * @return array Array of user IDs.
+ */
+function wp_get_users_with_no_role() {
+	global $wpdb;
+
+	if ( is_multisite() ) {
+		return array();
+	}
+
+	$prefix = $wpdb->get_blog_prefix();
+	$regex  = implode( '|', wp_roles()->get_names() );
+	$regex  = preg_replace( '/[^a-zA-Z_\|-]/', '', $regex );
+	$users  = $wpdb->get_col( $wpdb->prepare( "
+		SELECT user_id
+		FROM $wpdb->usermeta
+		WHERE meta_key = '{$prefix}capabilities'
+		AND meta_value NOT REGEXP %s
+	", $regex ) );
+
+	return $users;
 }

@@ -355,9 +355,11 @@ final class WP_Customize_Widgets {
 		}
 
 		$this->manager->add_panel( 'widgets', array(
-			'title'       => __( 'Widgets' ),
-			'description' => __( 'Widgets are independent sections of content that can be placed into widgetized areas provided by your theme (commonly called sidebars).' ),
-			'priority'    => 110,
+			'type'            => 'widgets',
+			'title'           => __( 'Widgets' ),
+			'description'     => __( 'Widgets are independent sections of content that can be placed into widgetized areas provided by your theme (commonly called sidebars).' ),
+			'priority'        => 110,
+			'active_callback' => array( $this, 'is_panel_active' ),
 		) );
 
 		foreach ( $sidebars_widgets as $sidebar_id => $sidebar_widget_ids ) {
@@ -365,7 +367,7 @@ final class WP_Customize_Widgets {
 				$sidebar_widget_ids = array();
 			}
 
-			$is_registered_sidebar = isset( $wp_registered_sidebars[ $sidebar_id ] );
+			$is_registered_sidebar = is_registered_sidebar( $sidebar_id );
 			$is_inactive_widgets   = ( 'wp_inactive_widgets' === $sidebar_id );
 			$is_active_sidebar     = ( $is_registered_sidebar && ! $is_inactive_widgets );
 
@@ -452,6 +454,22 @@ final class WP_Customize_Widgets {
 		}
 
 		add_filter( 'sidebars_widgets', array( $this, 'preview_sidebars_widgets' ), 1 );
+	}
+
+	/**
+	 * Return whether the widgets panel is active, based on whether there are sidebars registered.
+	 *
+	 * @since 4.4.0
+	 * @access public
+	 *
+	 * @see WP_Customize_Panel::$active_callback
+	 *
+	 * @global array $wp_registered_sidebars
+	 * @return bool Active.
+	 */
+	public function is_panel_active() {
+		global $wp_registered_sidebars;
+		return ! empty( $wp_registered_sidebars );
 	}
 
 	/**
@@ -655,6 +673,7 @@ final class WP_Customize_Widgets {
 				'error'            => __( 'An error has occurred. Please reload the page and try again.' ),
 				'widgetMovedUp'    => __( 'Widget moved up' ),
 				'widgetMovedDown'  => __( 'Widget moved down' ),
+				'noAreasRendered'  => __( 'There are no widget areas currently rendered in the preview. Navigate in the preview to a template that makes use of a widget area in order to access its widgets here.' ),
 			),
 			'tpl' => array(
 				'widgetReorderNav' => $widget_reorder_nav_tpl,
@@ -1102,14 +1121,12 @@ final class WP_Customize_Widgets {
 	 * @since 3.9.0
 	 * @access public
 	 *
-	 * @global array $wp_registered_sidebars
-	 *
 	 * @param bool   $is_active  Whether the sidebar is active.
 	 * @param string $sidebar_id Sidebar ID.
 	 * @return bool
 	 */
 	public function tally_sidebars_via_is_active_sidebar_calls( $is_active, $sidebar_id ) {
-		if ( isset( $GLOBALS['wp_registered_sidebars'][$sidebar_id] ) ) {
+		if ( is_registered_sidebar( $sidebar_id ) ) {
 			$this->rendered_sidebars[] = $sidebar_id;
 		}
 		/*
@@ -1130,14 +1147,12 @@ final class WP_Customize_Widgets {
 	 * @since 3.9.0
 	 * @access public
 	 *
-	 * @global array $wp_registered_sidebars
-	 *
 	 * @param bool   $has_widgets Whether the current sidebar has widgets.
 	 * @param string $sidebar_id  Sidebar ID.
 	 * @return bool
 	 */
 	public function tally_sidebars_via_dynamic_sidebar_calls( $has_widgets, $sidebar_id ) {
-		if ( isset( $GLOBALS['wp_registered_sidebars'][$sidebar_id] ) ) {
+		if ( is_registered_sidebar( $sidebar_id ) ) {
 			$this->rendered_sidebars[] = $sidebar_id;
 		}
 

@@ -79,7 +79,7 @@ function wp_default_scripts( &$scripts ) {
 
 	$scripts->add( 'common', "/wp-admin/js/common$suffix.js", array('jquery', 'hoverIntent', 'utils', 'list-table'), false, 1 );
 	did_action( 'init' ) && $scripts->localize( 'common', 'commonL10n', array(
-		'warnDelete' => __( "You are about to permanently delete the selected items.\n  'Cancel' to stop, 'OK' to delete." ),
+		'warnDelete' => __( "You are about to permanently delete these items.\n  'Cancel' to stop, 'OK' to delete." ),
 		'dismiss'    => __( 'Dismiss this notice.' ),
 	) );
 
@@ -288,7 +288,7 @@ function wp_default_scripts( &$scripts ) {
 		'error_uploading' => __('&#8220;%s&#8221; has failed to upload.')
 	);
 
-	$scripts->add( 'plupload', '/wp-includes/js/plupload/plupload.full.min.js', array(), '2.1.1' );
+	$scripts->add( 'plupload', '/wp-includes/js/plupload/plupload.full.min.js', array(), '2.1.8' );
 	// Back compat handles:
 	foreach ( array( 'all', 'html5', 'flash', 'silverlight', 'html4' ) as $handle ) {
 		$scripts->add( "plupload-$handle", false, array( 'plupload' ), '2.1.1' );
@@ -466,7 +466,7 @@ function wp_default_scripts( &$scripts ) {
 		),
 	) );
 
-	$scripts->add( 'wp-oembed', "/wp-includes/js/wp-oembed$suffix.js" );
+	$scripts->add( 'wp-embed', "/wp-includes/js/wp-embed$suffix.js" );
 
 	// To enqueue media-views or media-editor, call wp_enqueue_media().
 	// Both rely on numerous settings, styles, and templates to operate correctly.
@@ -500,7 +500,7 @@ function wp_default_scripts( &$scripts ) {
 			'tagDelimiter' => _x( ',', 'tag delimiter' ),
 		) );
 
-		$scripts->add( 'post', "/wp-admin/js/post$suffix.js", array( 'suggest', 'wp-lists', 'postbox', 'tags-box', 'underscore', 'word-count' ), false, 1 );
+		$scripts->add( 'post', "/wp-admin/js/post$suffix.js", array( 'suggest', 'wp-lists', 'postbox', 'tags-box', 'underscore', 'word-count', 'wp-a11y' ), false, 1 );
 		did_action( 'init' ) && $scripts->localize( 'post', 'postL10n', array(
 			'ok' => __('OK'),
 			'cancel' => __('Cancel'),
@@ -524,6 +524,7 @@ function wp_default_scripts( &$scripts ) {
 			'published' => __('Published'),
 			'saveAlert' => __('The changes you made will be lost if you navigate away from this page.'),
 			'savingText' => __('Saving Draft&#8230;'),
+			'permalinkSaved' => __( 'Permalink saved' ),
 		) );
 
 		$scripts->add( 'press-this', "/wp-admin/js/press-this$suffix.js", array( 'jquery', 'tags-box' ), false, 1 );

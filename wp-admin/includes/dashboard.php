@@ -522,6 +522,16 @@ function wp_dashboard_recent_drafts( $drafts = false ) {
 			'orderby'        => 'modified',
 			'order'          => 'DESC'
 		);
+
+		/**
+		 * Filter the post query arguments for the 'Recent Drafts' dashboard widget.
+		 *
+		 * @since 4.4.0
+		 *
+		 * @param array $query_args The query arguments for the 'Recent Drafts' dashboard widget.
+		 */
+		$query_args = apply_filters( 'dashboard_recent_drafts_query_args', $query_args );
+
 		$drafts = get_posts( $query_args );
 		if ( ! $drafts ) {
 			return;
@@ -780,6 +790,9 @@ function wp_dashboard_recent_posts( $args ) {
 				$relative = __( 'Today' );
 			} elseif ( date( 'Y-m-d', $time ) == $tomorrow ) {
 				$relative = __( 'Tomorrow' );
+			} elseif ( date( 'Y', $time ) !== date( 'Y', current_time( 'timestamp' ) ) ) {
+				/* translators: date and time format for recent posts on the dashboard, from a different calendar year, see http://php.net/date */
+				$relative = date_i18n( __( 'M jS Y' ), $time );
 			} else {
 				/* translators: date and time format for recent posts on the dashboard, see http://php.net/date */
 				$relative = date_i18n( __( 'M jS' ), $time );

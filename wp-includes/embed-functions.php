@@ -1,6 +1,6 @@
 <?php
 /**
- * WordPress API for embedding content.
+ * oEmbed API: Top-level oEmbed functionality
  *
  * @package WordPress
  * @subpackage oEmbed
@@ -328,12 +328,16 @@ function wp_embed_handler_video( $matches, $attr, $url, $rawattr ) {
 }
 
 /**
- * Parse an oEmbed API query.
+ * Parses an oEmbed API query.
  *
  * @since 4.4.0
+ *
+ * @see WP_oEmbed_Controller::parse_query()
+ *
+ * @param WP_Query $wp_query The current WP_Query instance.
  */
 function wp_oembed_parse_query( $wp_query ) {
-	$controller = new WP_oEmbed_Controller;
+	$controller = new WP_oEmbed_Controller();
 	$controller->parse_query( $wp_query );
 }
 
@@ -351,7 +355,7 @@ function wp_oembed_add_discovery_links() {
 	}
 
 	/**
-	 * Filter the oEmbed discovery links.
+	 * Filter the oEmbed discovery links HTML.
 	 *
 	 * @since 4.4.0
 	 *
@@ -361,17 +365,17 @@ function wp_oembed_add_discovery_links() {
 }
 
 /**
- * Add the necessary JavaScript to communicate with the embedded iframes.
+ * Adds the necessary JavaScript to communicate with the embedded iframes.
  *
  * @since 4.4.0
  */
 function wp_oembed_add_host_js() {
-	wp_enqueue_script( 'wp-oembed' );
+	wp_enqueue_script( 'wp-embed' );
 }
 
 
 /**
- * Get the URL to embed a specific post in an iframe.
+ * Retrieves the URL to embed a specific post in an iframe.
  *
  * @since 4.4.0
  *
@@ -403,10 +407,9 @@ function get_post_embed_url( $post = null ) {
 }
 
 /**
- * Get the oEmbed endpoint URL for a given permalink.
+ * Retrieves the oEmbed endpoint URL for a given permalink.
  *
- * Pass an empty string as the first argument
- * to get the endpoint base URL.
+ * Pass an empty string as the first argument to get the endpoint base URL.
  *
  * @since 4.4.0
  *
@@ -441,7 +444,7 @@ function get_oembed_endpoint_url( $permalink = '', $format = 'json' ) {
 }
 
 /**
- * Get the embed code for a specific post.
+ * Retrieves the embed code for a specific post.
  *
  * @since 4.4.0
  *
@@ -461,17 +464,17 @@ function get_post_embed_html( $post = null, $width, $height ) {
 
 	$output = "<script type='text/javascript'>\n";
 	if ( SCRIPT_DEBUG ) {
-		$output .= file_get_contents( ABSPATH . WPINC . '/js/wp-oembed.js' );
+		$output .= file_get_contents( ABSPATH . WPINC . '/js/wp-embed.js' );
 	} else {
 		/*
 		 * If you're looking at a src version of this file, you'll see an "include"
 		 * statement below. This is used by the `grunt build` process to directly
-		 * include a minified version of wp-oembed.js, instead of using the
+		 * include a minified version of wp-embed.js, instead of using the
 		 * file_get_contents() method from above.
 		 *
 		 * If you're looking at a build version of this file, you'll see a string of
 		 * minified JavaScript. If you need to debug it, please turn on SCRIPT_DEBUG
-		 * and edit wp-oembed.js directly.
+		 * and edit wp-embed.js directly.
 		 */
 		$output .=<<<JS
 		!function(a,b){"use strict";function c(){var a=-1!==navigator.appVersion.indexOf("MSIE 10"),c=!!navigator.userAgent.match(/Trident.*rv\:11\./);if(a||c)for(var d,e=b.querySelectorAll(".wp-embedded-content[security]"),f=0;f<e.length;f++)d=e[f].cloneNode(!0),d.removeAttribute("security"),e[f].parentNode.insertBefore(d,e[f].nextSibling),e[f].parentNode.removeChild(e[f])}a.wp=a.wp||{},a.wp.receiveEmbedMessage||(a.wp.receiveEmbedMessage=function(c){var d=c.data;if(d.secret||d.message||d.value)for(var e=b.querySelectorAll('.wp-embedded-content[data-secret="'+d.secret+'"]'),f=0;f<e.length;f++){var g=e[f];if("height"===d.message){var h=d.value;h>1e3?h=1e3:200>h&&(h=200),g.height=h+"px"}if("link"===d.message){var i=b.createElement("a"),j=b.createElement("a");i.href=g.getAttribute("src"),j.href=d.value,j.host===i.host&&b.activeElement===g&&(a.top.location.href=d.value)}}},a.addEventListener("message",a.wp.receiveEmbedMessage,!1),b.addEventListener("DOMContentLoaded",c,!1))}(window,document);
@@ -488,7 +491,7 @@ JS;
 	);
 
 	/**
-	 * Filters the oEmbed HTML output.
+	 * Filter the embed HTML output for a given post.
 	 *
 	 * @since 4.4.0
 	 *
@@ -497,11 +500,11 @@ JS;
 	 * @param int     $width  Width of the response.
 	 * @param int     $height Height of the response.
 	 */
-	return apply_filters( 'oembed_html', $output, $post, $width, $height );
+	return apply_filters( 'embed_html', $output, $post, $width, $height );
 }
 
 /**
- * Get the oEmbed response data for a given post.
+ * Retrieves the oEmbed response data for a given post.
  *
  * @since 4.4.0
  *
@@ -521,23 +524,26 @@ function get_oembed_response_data( $post = null, $width ) {
 	}
 
 	/**
-	 * Filter the allowed minimum width for the oEmbed response.
+	 * Filter the allowed minimum and maximum widths for the oEmbed response.
 	 *
-	 * @param int $width The minimum width. Defaults to 200.
-	 */
-	$minwidth = apply_filters( 'oembed_minwidth', 200 );
-
-	/**
-	 * Filter the allowed maximum width for the oEmbed response.
+	 * @since 4.4.0
 	 *
-	 * @param int $width The maximum width. Defaults to 600.
+	 * @param array $min_max_width {
+	 *     Minimum and maximum widths for the oEmbed response.
+	 *
+	 *     @type int $min Minimum width. Default 200.
+	 *     @type int $max Maximum width. Default 600.
+	 * }
 	 */
-	$maxwidth = apply_filters( 'oembed_maxwidth', 600 );
+	$min_max_width = apply_filters( 'oembed_min_max_width', array(
+		'min' => 200,
+		'max' => 600
+	) );
 
-	if ( $width < $minwidth ) {
-		$width = $minwidth;
-	} else if ( $width > $maxwidth ) {
-		$width = $maxwidth;
+	if ( $width < $min_max_width['min'] ) {
+		$width = $min_max_width['min'];
+	} elseif ( $width > $min_max_width['max'] ) {
+		$width = $min_max_width['max'];
 	}
 
 	$height = ceil( $width / 16 * 9 );
@@ -624,7 +630,7 @@ function get_oembed_response_data_rich( $data, $post, $width, $height ) {
  *
  * @since 4.4.0
  *
- * @param string $format The oEmbed response format. Accepts 'json', 'xml'.
+ * @param string $format The oEmbed response format. Accepts 'json' or 'xml'.
  * @return string The format, either 'xml' or 'json'. Default 'json'.
  */
 function wp_oembed_ensure_format( $format ) {
@@ -671,23 +677,23 @@ function _oembed_create_xml( $data, $node = null ) {
 }
 
 /**
- * Filters the returned oEmbed HTML.
+ * Filters the given oEmbed HTML.
  *
- * If the $url isn't on the trusted providers list,
+ * If the `$url` isn't on the trusted providers list,
  * we need to filter the HTML heavily for security.
  *
  * Only filters 'rich' and 'html' response types.
  *
  * @since 4.4.0
  *
- * @param string $return The returned oEmbed HTML.
+ * @param string $result The oEmbed HTML result.
  * @param object $data   A data object result from an oEmbed provider.
  * @param string $url    The URL of the content to be embedded.
  * @return string The filtered and sanitized oEmbed result.
  */
-function wp_filter_oembed_result( $return, $data, $url ) {
-	if ( false === $return || ! in_array( $data->type, array( 'rich', 'video' ) ) ) {
-		return $return;
+function wp_filter_oembed_result( $result, $data, $url ) {
+	if ( false === $result || ! in_array( $data->type, array( 'rich', 'video' ) ) ) {
+		return $result;
 	}
 
 	require_once( ABSPATH . WPINC . '/class-oembed.php' );
@@ -695,7 +701,7 @@ function wp_filter_oembed_result( $return, $data, $url ) {
 
 	// Don't modify the HTML for trusted providers.
 	if ( false !== $wp_oembed->get_provider( $url, array( 'discover' => false ) ) ) {
-		return $return;
+		return $result;
 	}
 
 	$allowed_html = array(
@@ -712,7 +718,7 @@ function wp_filter_oembed_result( $return, $data, $url ) {
 		),
 	);
 
-	$html = wp_kses( $return, $allowed_html );
+	$html = wp_kses( $result, $allowed_html );
 	preg_match( '|^.*(<iframe.*?></iframe>).*$|m', $html, $iframes );
 
 	if ( empty( $iframes ) ) {
@@ -742,7 +748,7 @@ function wp_filter_oembed_result( $return, $data, $url ) {
  * @param string $more_string The string shown within the more link.
  * @return string The modified excerpt.
  */
-function wp_oembed_excerpt_more( $more_string ) {
+function wp_embed_excerpt_more( $more_string ) {
 	if ( ! is_embed() ) {
 		return $more_string;
 	}
@@ -758,7 +764,9 @@ function wp_oembed_excerpt_more( $more_string ) {
 }
 
 /**
- * Display the post excerpt for the embed template.
+ * Displays the post excerpt for the embed template.
+ *
+ * Intended to be used in 'The Loop'.
  *
  * @since 4.4.0
  */
@@ -767,6 +775,8 @@ function the_excerpt_embed() {
 
 	/**
 	 * Filter the post excerpt for the embed template.
+	 *
+	 * @since 4.4.0
 	 *
 	 * @param string $output The current post excerpt.
 	 */
@@ -783,7 +793,7 @@ function the_excerpt_embed() {
  * @param string $content The current post excerpt.
  * @return string The modified post excerpt.
  */
-function wp_oembed_excerpt_attachment( $content ) {
+function wp_embed_excerpt_attachment( $content ) {
 	if ( is_attachment() ) {
 		return prepend_attachment( '' );
 	}
@@ -792,16 +802,16 @@ function wp_oembed_excerpt_attachment( $content ) {
 }
 
 /**
- * Print the CSS in the embed iframe header.
+ * Prints the CSS in the embed iframe header.
  *
  * @since 4.4.0
  */
-function print_oembed_embed_styles() {
+function print_embed_styles() {
 	?>
 	<style type="text/css">
 	<?php
-		if ( WP_DEBUG ) {
-			readfile( ABSPATH . WPINC . "/css/wp-oembed-embed.css" );
+		if ( SCRIPT_DEBUG ) {
+			readfile( ABSPATH . WPINC . "/css/wp-embed-template.css" );
 		} else {
 			/*
 			 * If you're looking at a src version of this file, you'll see an "include"
@@ -810,8 +820,8 @@ function print_oembed_embed_styles() {
 			 * readfile() method from above.
 			 *
 			 * If you're looking at a build version of this file, you'll see a string of
-			 * minified CSS. If you need to debug it, please turn on WP_DEBUG
-			 * and edit wp-oembed-embed.css directly.
+			 * minified CSS. If you need to debug it, please turn on SCRIPT_DEBUG
+			 * and edit wp-embed-template.css directly.
 			 */
 			?>
 			body,html{padding:0;margin:0}body{font-family:sans-serif}.screen-reader-text{clip:rect(1px,1px,1px,1px);height:1px;overflow:hidden;position:absolute!important;width:1px}.dashicons{display:inline-block;width:20px;height:20px;background-color:transparent;background-repeat:no-repeat;-webkit-background-size:20px 20px;background-size:20px;background-position:center;-webkit-transition:background .1s ease-in;transition:background .1s ease-in;position:relative;top:5px}.dashicons-no{background-image:url("data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20d%3D%27M15.55%2013.7l-2.19%202.06-3.42-3.65-3.64%203.43-2.06-2.18%203.64-3.43-3.42-3.64%202.18-2.06%203.43%203.64%203.64-3.42%202.05%202.18-3.64%203.43z%27%20fill%3D%27%23fff%27%2F%3E%3C%2Fsvg%3E")}.dashicons-admin-comments{background-image:url("data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20d%3D%27M5%202h9q.82%200%201.41.59T16%204v7q0%20.82-.59%201.41T14%2013h-2l-5%205v-5H5q-.82%200-1.41-.59T3%2011V4q0-.82.59-1.41T5%202z%27%20fill%3D%27%2382878c%27%2F%3E%3C%2Fsvg%3E")}.wp-embed-comments a:hover .dashicons-admin-comments{background-image:url("data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20d%3D%27M5%202h9q.82%200%201.41.59T16%204v7q0%20.82-.59%201.41T14%2013h-2l-5%205v-5H5q-.82%200-1.41-.59T3%2011V4q0-.82.59-1.41T5%202z%27%20fill%3D%27%230073aa%27%2F%3E%3C%2Fsvg%3E")}.dashicons-share{background-image:url("data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20d%3D%27M14.5%2012q1.24%200%202.12.88T17.5%2015t-.88%202.12-2.12.88-2.12-.88T11.5%2015q0-.34.09-.69l-4.38-2.3Q6.32%2013%205%2013q-1.24%200-2.12-.88T2%2010t.88-2.12T5%207q1.3%200%202.21.99l4.38-2.3q-.09-.35-.09-.69%200-1.24.88-2.12T14.5%202t2.12.88T17.5%205t-.88%202.12T14.5%208q-1.3%200-2.21-.99l-4.38%202.3Q8%209.66%208%2010t-.09.69l4.38%202.3q.89-.99%202.21-.99z%27%20fill%3D%27%2382878c%27%2F%3E%3C%2Fsvg%3E")}.wp-embed-share-dialog-open:hover .dashicons-share{background-image:url("data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20d%3D%27M14.5%2012q1.24%200%202.12.88T17.5%2015t-.88%202.12-2.12.88-2.12-.88T11.5%2015q0-.34.09-.69l-4.38-2.3Q6.32%2013%205%2013q-1.24%200-2.12-.88T2%2010t.88-2.12T5%207q1.3%200%202.21.99l4.38-2.3q-.09-.35-.09-.69%200-1.24.88-2.12T14.5%202t2.12.88T17.5%205t-.88%202.12T14.5%208q-1.3%200-2.21-.99l-4.38%202.3Q8%209.66%208%2010t-.09.69l4.38%202.3q.89-.99%202.21-.99z%27%20fill%3D%27%230073aa%27%2F%3E%3C%2Fsvg%3E")}.wp-embed{width:100%;padding:25px;font:400 14px/1.5 'Open Sans',sans-serif;color:#82878c;background:#fff;border:1px solid #e5e5e5;-webkit-box-shadow:0 1px 1px rgba(0,0,0,.05);box-shadow:0 1px 1px rgba(0,0,0,.05);-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;overflow:auto;zoom:1}.wp-embed a{color:#82878c;text-decoration:none}.wp-embed a:hover{text-decoration:underline}.wp-embed-featured-image{margin-bottom:20px}.wp-embed-featured-image img{width:100%;height:auto;border:none}.wp-embed-featured-image.square{float:left;max-width:10pc;margin-right:20px}.wp-embed p{margin:0}p.wp-embed-heading{margin:0 0 15px;font-weight:700;font-size:22px;line-height:1.3}.wp-embed-heading a{color:#32373c}.wp-embed .wp-embed-more{color:#b4b9be}.wp-embed-footer{display:table;width:100%;margin-top:30px}.wp-embed-site-icon{position:absolute;top:50%;left:0;-webkit-transform:translateY(-50%);-ms-transform:translateY(-50%);transform:translateY(-50%);height:25px;width:25px;border:0}.wp-embed-site-title{font-weight:700;line-height:25px}.wp-embed-site-title a{position:relative;display:inline-block;padding-left:35px}.wp-embed-meta,.wp-embed-site-title{display:table-cell}.wp-embed-meta{text-align:right;white-space:nowrap;vertical-align:middle}.wp-embed-comments,.wp-embed-share{display:inline}.wp-embed-meta a:hover{text-decoration:none;color:#0073aa}.wp-embed-comments a{line-height:25px;display:inline-block}.wp-embed-comments+.wp-embed-share{margin-left:10px}.wp-embed-share-dialog{position:absolute;top:0;left:0;right:0;bottom:0;background-color:rgba(10,10,10,.9);color:#fff;opacity:1;-webkit-transition:opacity .25s ease-in-out;transition:opacity .25s ease-in-out}.wp-embed-share-dialog.hidden{opacity:0;visibility:hidden}.wp-embed-share-dialog-close,.wp-embed-share-dialog-open{margin:-8px 0 0;padding:0;background:0 0;border:none;cursor:pointer;outline:0}.wp-embed-share-dialog-close .dashicons,.wp-embed-share-dialog-open .dashicons{padding:4px}.wp-embed-share-dialog-open .dashicons{top:8px}.wp-embed-share-dialog-close:focus .dashicons,.wp-embed-share-dialog-open:focus .dashicons{-webkit-box-shadow:0 0 0 1px #5b9dd9,0 0 2px 1px rgba(30,140,190,.8);box-shadow:0 0 0 1px #5b9dd9,0 0 2px 1px rgba(30,140,190,.8);-webkit-border-radius:100%;border-radius:100%}.wp-embed-share-dialog-close{position:absolute;top:20px;right:20px;font-size:22px}.wp-embed-share-dialog-close:hover{text-decoration:none}.wp-embed-share-dialog-close .dashicons{height:24px;width:24px;-webkit-background-size:24px 24px;background-size:24px}.wp-embed-share-dialog-content{height:100%;-webkit-transform-style:preserve-3d;transform-style:preserve-3d;overflow:hidden}.wp-embed-share-dialog-text{margin-top:25px;padding:20px}.wp-embed-share-tabs{margin:0 0 20px;padding:0;list-style:none}.wp-embed-share-tab-button{display:inline}.wp-embed-share-tab-button button{margin:0;padding:0;border:none;background:0 0;font-size:1pc;line-height:1.3;color:#aaa;cursor:pointer;-webkit-transition:color .1s ease-in;transition:color .1s ease-in}.wp-embed-share-tab-button [aria-selected=true],.wp-embed-share-tab-button button:hover{color:#fff}.wp-embed-share-tab-button+.wp-embed-share-tab-button{margin:0 0 0 10px;padding:0 0 0 11px;border-left:1px solid #aaa}.wp-embed-share-tab[aria-hidden=true]{display:none}p.wp-embed-share-description{margin:0;font-size:14px;line-height:1;font-style:italic;color:#aaa}.wp-embed-share-input{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;width:100%;border:none;height:28px;margin:0 0 10px;padding:0 5px;font:400 14px/1.5 'Open Sans',sans-serif;resize:none;cursor:text}textarea.wp-embed-share-input{height:72px}html[dir=rtl] .wp-embed-featured-image.square{float:right;margin-right:0;margin-left:20px}html[dir=rtl] .wp-embed-site-title a{padding-left:0;padding-right:35px}html[dir=rtl] .wp-embed-site-icon{margin-right:0;margin-left:10px;left:auto;right:0}html[dir=rtl] .wp-embed-meta{text-align:left}html[dir=rtl] .wp-embed-share{margin-left:0;margin-right:10px}html[dir=rtl] .wp-embed-share-dialog-close{right:auto;left:20px}html[dir=rtl] .wp-embed-share-tab-button+.wp-embed-share-tab-button{margin:0 10px 0 0;padding:0 11px 0 0;border-left:none;border-right:1px solid #aaa}
@@ -823,26 +833,26 @@ function print_oembed_embed_styles() {
 }
 
 /**
- * Print the CSS in the embed iframe header.
+ * Prints the CSS in the embed iframe header.
  *
  * @since 4.4.0
  */
-function print_oembed_embed_scripts() {
+function print_embed_scripts() {
 	?>
 	<script type="text/javascript">
 	<?php
 		if ( SCRIPT_DEBUG ) {
-			readfile( ABSPATH . WPINC . "/js/wp-oembed-embed.js" );
+			readfile( ABSPATH . WPINC . "/js/wp-embed-template.js" );
 		} else {
 			/*
 			 * If you're looking at a src version of this file, you'll see an "include"
 			 * statement below. This is used by the `grunt build` process to directly
-			 * include a minified version of wp-oembed-embed.js, instead of using the
+			 * include a minified version of wp-embed-template.js, instead of using the
 			 * readfile() method from above.
 			 *
 			 * If you're looking at a build version of this file, you'll see a string of
 			 * minified JavaScript. If you need to debug it, please turn on SCRIPT_DEBUG
-			 * and edit wp-oembed-embed.js directly.
+			 * and edit wp-embed-template.js directly.
 			 */
 			?>
 			!function(a,b){"use strict";function c(b,c){a.parent.postMessage({message:b,value:c,secret:g},"*")}function d(){function d(){j.className=j.className.replace("hidden",""),m[0].select()}function e(){j.className+=" hidden",b.querySelector(".wp-embed-share-dialog-open").focus()}function f(a){var c=b.querySelector('.wp-embed-share-tab-button [aria-selected="true"]');c.setAttribute("aria-selected","false"),b.querySelector("#"+c.getAttribute("aria-controls")).setAttribute("aria-hidden","true"),a.target.setAttribute("aria-selected","true"),b.querySelector("#"+a.target.getAttribute("aria-controls")).setAttribute("aria-hidden","false")}function g(a){var c,d,e=a.target,f=e.parentElement.previousElementSibling,g=e.parentElement.nextElementSibling;if(37===a.keyCode)c=f;else{if(39!==a.keyCode)return!1;c=g}"rtl"===b.documentElement.getAttribute("dir")&&(c=c===f?g:f),c&&(d=c.firstElementChild,e.setAttribute("tabindex","-1"),e.setAttribute("aria-selected",!1),b.querySelector("#"+e.getAttribute("aria-controls")).setAttribute("aria-hidden","true"),d.setAttribute("tabindex","0"),d.setAttribute("aria-selected","true"),d.focus(),b.querySelector("#"+d.getAttribute("aria-controls")).setAttribute("aria-hidden","false"))}function h(a){var b,d=a.target;b=d.hasAttribute("href")?d.getAttribute("href"):d.parentElement.getAttribute("href"),c("link",b),a.preventDefault()}var i,j=b.querySelector(".wp-embed-share-dialog"),k=b.querySelector(".wp-embed-share-dialog-open"),l=b.querySelector(".wp-embed-share-dialog-close"),m=b.querySelectorAll(".wp-embed-share-input"),n=b.querySelectorAll(".wp-embed-share-tab-button button"),o=b.getElementsByTagName("a");if(m)for(i=0;i<m.length;i++)m[i].addEventListener("click",function(a){a.target.select()});if(k&&k.addEventListener("click",function(a){d(),a.preventDefault()}),l&&l.addEventListener("click",function(a){e(),a.preventDefault()}),n)for(i=0;i<n.length;i++)n[i].addEventListener("click",f),n[i].addEventListener("keydown",g);if(b.addEventListener("keydown",function(a){27===a.keyCode&&-1===j.className.indexOf("hidden")&&e()},!1),a.self!==a.top)for(c("height",Math.ceil(b.body.getBoundingClientRect().height)),i=0;i<o.length;i++)o[i].addEventListener("click",h)}function e(){a.self!==a.top&&(clearTimeout(f),f=setTimeout(function(){c("height",Math.ceil(b.body.getBoundingClientRect().height))},100))}var f,g=a.location.hash.replace(/.*secret=([\d\w]{10}).*/,"$1");b.addEventListener("DOMContentLoaded",d,!1),a.addEventListener("resize",e,!1)}(window,document);

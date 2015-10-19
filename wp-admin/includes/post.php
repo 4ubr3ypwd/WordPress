@@ -173,7 +173,7 @@ function _wp_translate_postdata( $update = false, $post_data = null ) {
  *
  * @since 1.5.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param array $post_data Optional.
  * @return int Post ID.
@@ -403,7 +403,7 @@ function edit_post( $post_data = null ) {
  *
  * @since 2.7.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param array $post_data Optional, the array of post data to process if not provided will use $_POST superglobal.
  * @return array
@@ -659,7 +659,7 @@ function get_default_post_to_edit( $post_type = 'post', $create_in_db = false ) 
  *
  * @since 2.0.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $title Post title
  * @param string $content Optional post content
@@ -843,7 +843,7 @@ function delete_meta( $mid ) {
  *
  * @since 1.2.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @return mixed
  */
@@ -876,7 +876,7 @@ function get_post_meta_by_id( $mid ) {
  *
  * @since 1.2.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int $postid
  * @return mixed
@@ -1074,7 +1074,7 @@ function wp_edit_posts_query( $q = false ) {
  *
  * @since 2.5.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $type
  * @return mixed
@@ -1346,7 +1346,7 @@ function get_sample_permalink_html( $id, $new_title = null, $new_slug = null ) {
 		$return = '<strong>' . __( 'Permalink:' ) . "</strong>\n";
 		$return .= '<span id="sample-permalink"><a href="' . esc_url( $view_link ) . '"' . $preview_target . '>' . $display_link . "</a></span>\n";
 		$return .= '&lrm;'; // Fix bi-directional text display defect in RTL languages.
-		$return .= '<span id="edit-slug-buttons"><button type="button" class="edit-slug button button-small hide-if-no-js">' . __( 'Edit' ) . "</button></span>\n";
+		$return .= '<span id="edit-slug-buttons"><button type="button" class="edit-slug button button-small hide-if-no-js" aria-label="' . __( 'Edit permalink' ) . '">' . __( 'Edit' ) . "</button></span>\n";
 		$return .= '<span id="editable-post-name-full">' . $post_name . "</span>\n";
 	}
 
@@ -1394,12 +1394,29 @@ function _wp_post_thumbnail_html( $thumbnail_id = null, $post = null ) {
 	);
 
 	if ( $thumbnail_id && get_post( $thumbnail_id ) ) {
-		$old_content_width = $content_width;
-		$content_width = 266;
-		if ( !isset( $_wp_additional_image_sizes['post-thumbnail'] ) )
-			$thumbnail_html = wp_get_attachment_image( $thumbnail_id, array( $content_width, $content_width ) );
-		else
-			$thumbnail_html = wp_get_attachment_image( $thumbnail_id, 'post-thumbnail' );
+		$size = isset( $_wp_additional_image_sizes['post-thumbnail'] ) ? 'post-thumbnail' : array( 266, 266 );
+
+		/**
+		 * Filter the size used to display the post thumbnail image in the 'Featured Image' meta box.
+		 *
+		 * Note: When a theme adds 'post-thumbnail' support, a special 'post-thumbnail'
+		 * image size is registered, which differs from the 'thumbnail' image size
+		 * managed via the Settings > Media screen. See the `$size` parameter description
+		 * for more information on default values.
+		 *
+		 * @since 4.4.0
+		 *
+		 * @param string|array $size         Post thumbnail image size to display in the meta box. Accepts any valid
+		 *                                   image size, or an array of width and height values in pixels (in that order).
+		 *                                   If the 'post-thumbnail' size is set, default is 'post-thumbnail'. Otherwise,
+		 *                                   default is an array with 266 as both the height and width values.
+		 * @param int          $thumbnail_id Post thumbnail attachment ID.
+		 * @param WP_Post      $post         The post object associated with the thumbnail.
+		 */
+		$size = apply_filters( 'admin_post_thumbnail_size', $size, $thumbnail_id, $post );
+
+		$thumbnail_html = wp_get_attachment_image( $thumbnail_id, $size );
+
 		if ( !empty( $thumbnail_html ) ) {
 			$ajax_nonce = wp_create_nonce( 'set_post_thumbnail-' . $post->ID );
 			$content = sprintf( $set_thumbnail_link,
@@ -1409,7 +1426,6 @@ function _wp_post_thumbnail_html( $thumbnail_id = null, $post = null ) {
 			);
 			$content .= '<p class="hide-if-no-js"><a href="#" id="remove-post-thumbnail" onclick="WPRemoveThumbnail(\'' . $ajax_nonce . '\');return false;">' . esc_html( $post_type_object->labels->remove_featured_image ) . '</a></p>';
 		}
-		$content_width = $old_content_width;
 	}
 
 	/**

@@ -29,6 +29,15 @@ require( ABSPATH . WPINC . '/default-constants.php' );
 global $wp_version, $wp_db_version, $tinymce_version, $required_php_version, $required_mysql_version;
 require( ABSPATH . WPINC . '/version.php' );
 
+/**
+ * If not already configured, `$blog_id` will default to 1 in a single site
+ * configuration. In multisite, it will be overridden by default in ms-settings.php.
+ *
+ * @global int $blog_id
+ * @since 2.0.0
+ */
+global $blog_id;
+
 // Set initial default constants including WP_MEMORY_LIMIT, WP_MAX_MEMORY_LIMIT, WP_DEBUG, SCRIPT_DEBUG, WP_CONTENT_DIR and WP_CACHE.
 wp_initial_constants();
 
@@ -253,7 +262,7 @@ do_action( 'sanitize_comment_cookies' );
 
 /**
  * WordPress Query object
- * @global object $wp_the_query
+ * @global WP_Query $wp_the_query
  * @since 2.0.0
  */
 $GLOBALS['wp_the_query'] = new WP_Query();
@@ -261,35 +270,35 @@ $GLOBALS['wp_the_query'] = new WP_Query();
 /**
  * Holds the reference to @see $wp_the_query
  * Use this global for WordPress queries
- * @global object $wp_query
+ * @global WP_Query $wp_query
  * @since 1.5.0
  */
 $GLOBALS['wp_query'] = $GLOBALS['wp_the_query'];
 
 /**
  * Holds the WordPress Rewrite object for creating pretty URLs
- * @global object $wp_rewrite
+ * @global WP_Rewrite $wp_rewrite
  * @since 1.5.0
  */
 $GLOBALS['wp_rewrite'] = new WP_Rewrite();
 
 /**
  * WordPress Object
- * @global object $wp
+ * @global WP $wp
  * @since 2.0.0
  */
 $GLOBALS['wp'] = new WP();
 
 /**
  * WordPress Widget Factory Object
- * @global object $wp_widget_factory
+ * @global WP_Widget_Factory $wp_widget_factory
  * @since 2.8.0
  */
 $GLOBALS['wp_widget_factory'] = new WP_Widget_Factory();
 
 /**
  * WordPress User Roles
- * @global object $wp_roles
+ * @global WP_Roles $wp_roles
  * @since 2.0.0
  */
 $GLOBALS['wp_roles'] = new WP_Roles();
@@ -318,7 +327,7 @@ require_once( ABSPATH . WPINC . '/locale.php' );
 
 /**
  * WordPress Locale object for loading locale domain date and various strings.
- * @global object $wp_locale
+ * @global WP_Locale $wp_locale
  * @since 2.1.0
  */
 $GLOBALS['wp_locale'] = new WP_Locale();

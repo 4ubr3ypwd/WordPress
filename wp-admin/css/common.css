@@ -325,15 +325,9 @@ h6 {
 }
 
 h1 {
+	color: #23282d;
 	font-size: 2em;
 	margin: .67em 0;
-}
-
-.wrap > h1 {
-	color: #23282d;
-	font-size: 1.5em;
-	margin: .83em 0;
-	font-weight: 400;
 }
 
 h2,
@@ -343,6 +337,8 @@ h3 {
 	margin: 1em 0;
 }
 
+.update-php h2,
+.update-core-php h2,
 h4 {
 	font-size: 1em;
 	margin: 1.33em 0;
@@ -568,12 +564,14 @@ code {
 	margin: 10px 20px 0 2px;
 }
 
+.wrap > h2:first-child, /* Back-compat for old plugins */
 .wrap h1,
 .subtitle {
 	font-weight: normal;
 	margin: 0;
 }
 
+.wrap > h2:first-child, /* Back-compat for old plugins */
 .wrap h1 {
 	font-size: 23px;
 	font-weight: 400;
@@ -1570,10 +1568,17 @@ form.upgrade .hint {
 	background-position: bottom left;
 }
 
-#screen-options-wrap h5,
+#screen-options-wrap h5, /* Back-compat for old plugins */
+#screen-options-wrap legend,
 #contextual-help-wrap h5 {
-	margin: 8px 0;
-	font-size: 13px;
+	margin: 0;
+	padding: 8px 0;
+ 	font-size: 13px;
+	font-weight: 600;
+}
+
+.ie8 #screen-options-wrap legend {
+	color: inherit;
 }
 
 .metabox-prefs label {
@@ -1582,25 +1587,28 @@ form.upgrade .hint {
 	line-height: 30px;
 }
 
-.metabox-prefs label input[type=checkbox] {
-	margin-top: -4px;
+#number-of-columns {
+	display: inline-block;
+	vertical-align: middle;
+	line-height: 30px;
+}
+
+.metabox-prefs input[type=checkbox] {
+	margin-top: 0;
 	margin-right: 6px;
 }
 
-.metabox-prefs label input {
-	margin: 0 5px 0 2px;
+.metabox-prefs label input,
+.metabox-prefs label input[type=checkbox] {
+	margin: -4px 5px 0 0;
 }
 
 .metabox-prefs .columns-prefs label input {
-	margin: 0 2px;
+	margin: -1px 2px 0 0;
 }
 
 .metabox-prefs label a {
 	display: none;
-}
-
-.metabox-prefs .screen-options {
-	padding-top: 10px;
 }
 
 .metabox-prefs .screen-options input,
@@ -1617,6 +1625,15 @@ form.upgrade .hint {
 .metabox-prefs .screen-options label {
 	line-height: 28px;
 	padding-right: 0;
+}
+
+.screen-options + .screen-options {
+    margin-top: 10px;
+}
+
+.metabox-prefs .submit {
+	margin-top: 1em;
+	padding: 0;
 }
 
 /*------------------------------------------------------------------------------
@@ -1900,7 +1917,7 @@ html.wp-toolbar {
 }
 
 .columns-prefs label {
-	padding: 0 5px;
+	padding: 0 10px 0 0;
 }
 
 /* @todo: what is this doing here */
@@ -1990,15 +2007,18 @@ html.wp-toolbar {
 	color: #000;
 }
 
-h1.nav-tab-wrapper,
+h1.nav-tab-wrapper, /* Back-compat for pre-4.4 */
 h2.nav-tab-wrapper,
 h3.nav-tab-wrapper {
 	border-bottom: 1px solid #ccc;
-	padding-bottom: 0;
-	padding-left: 10px;
+	margin: 0;
+	padding: 9px 15px 0 10px;
+	font-size: 23px;
+	font-weight: 400;
+	line-height: 29px;
 }
 
-h1 .nav-tab,
+h1 .nav-tab, /* Back-compat for pre-4.4 */
 h2 .nav-tab {
 	padding: 6px 10px;
 	font-weight: 600;
@@ -2034,11 +2054,20 @@ h2 .nav-tab {
 	margin-right: 190px;
 }
 
-.metabox-holder h3 {
+.metabox-holder h3.hndle, /* Back-compat for pre-4.4 */
+.metabox-holder .stuffbox > h3, /* Back-compat for pre-4.4 */
+.metabox-holder .postbox > h3, /* Back-compat for pre-4.4 */
+.metabox-holder h2 {
 	font-size: 14px;
 	padding: 8px 12px;
 	margin: 0;
 	line-height: 1.4;
+}
+
+/* Back-compat for nav-menus screen */
+.nav-menus-php .metabox-holder h3 {
+	padding: 10px 10px 11px 14px;
+	line-height: 21px;
 }
 
 #templateside ul li a {
@@ -2103,7 +2132,8 @@ body.iframe {
 	width: auto;
 }
 
-#post-body #post-body-content #namediv h3 {
+#post-body #post-body-content #namediv h3, /* Back-compat for pre-4.4 */
+#post-body #post-body-content #namediv h2 {
 	margin-top: 0;
 }
 
@@ -2115,7 +2145,8 @@ body.iframe {
 	margin: 2px 0 0 9px;
 }
 
-#namediv h3 label {
+#namediv h3 label, /* Back-compat for pre-4.4 */
+#namediv h2 label {
 	vertical-align: baseline;
 }
 
@@ -2771,23 +2802,21 @@ img {
 	color: #464646;
 }
 
-/* @todo: these seem misplaced */
-.js .meta-box-sortables .postbox:hover .handlediv {
-	margin-right: 0 !important;
-}
-
 /* Metabox collapse arrow indicators */
 .js .sidebar-name .sidebar-name-arrow:before,
 .js .meta-box-sortables .postbox .toggle-indicator:before {
-	position: relative;
-	left: -1px; /* fix the dashicon horizontal alignment */
+	content: "\f142";
 	display: inline-block;
 	font: normal 20px/1 dashicons;
 	speak: none;
-	padding: 8px;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	text-decoration: none !important;
+}
+
+.js .widgets-holder-wrap.closed .sidebar-name-arrow:before,
+.js .meta-box-sortables .postbox.closed .handlediv .toggle-indicator:before {
+	content: "\f140";
 }
 
 .js .sidebar-name .sidebar-name-arrow:before {
@@ -2804,15 +2833,30 @@ img {
 	display: block;
 }
 
-/* Show the arrow only on hover */
-.js .sidebar-name .sidebar-name-arrow:before,
-.js .meta-box-sortables .postbox .toggle-indicator:before {
-	content: "\f142";
+.js .postbox .handlediv .toggle-indicator:before {
+	margin-top: 4px;
+	width: 20px;
+	-webkit-border-radius: 50%;
+	border-radius: 50%;
+	text-indent: -1px; /* account for the dashicon alignment */
 }
 
-.js .widgets-holder-wrap.closed .sidebar-name-arrow:before,
-.js .meta-box-sortables .postbox.closed .handlediv .toggle-indicator:before {
-	content: "\f140";
+.rtl.js .postbox .handlediv .toggle-indicator:before {
+	text-indent: 1px; /* account for the dashicon alignment */
+}
+
+.js .postbox .handlediv:focus {
+	-webkit-box-shadow: none;
+	box-shadow: none;
+}
+
+.js .postbox .handlediv:focus .toggle-indicator:before {
+	-webkit-box-shadow:
+    	0 0 0 1px #5b9dd9,
+		0 0 2px 1px rgba(30, 140, 190, .8);
+    box-shadow:
+    	0 0 0 1px #5b9dd9,
+		0 0 2px 1px rgba(30, 140, 190, .8);
 }
 
 /* @todo: appears to be Press This only and overridden */
@@ -2945,16 +2989,20 @@ img {
 }
 
 .widget-top a.widget-action:after {
-	padding: 12px 12px 11px;
+	padding: 1px 2px 1px 0px;
+	margin-top: 10px;
+	margin-right: 10px;
+	-webkit-border-radius: 50%;
+	border-radius: 50%;
 }
 
 .widget-top a.widget-action:focus:after {
-	-webkit-box-shadow: 0 0 0 1px #5b9dd9,0 0 2px 1px rgba(30,140,190,.8);
-	box-shadow: 0 0 0 1px #5b9dd9,0 0 2px 1px rgba(30,140,190,.8);
-}
-
-.nav-menus-php .item-edit:before {
-	line-height: 2.1;
+	-webkit-box-shadow:
+		0 0 0 1px #5b9dd9,
+		0 0 2px 1px rgba(30,140,190,.8);
+	box-shadow:
+		0 0 0 1px #5b9dd9,
+		0 0 2px 1px rgba(30,140,190,.8);
 }
 
 .control-section .accordion-section-title:after,
@@ -3406,7 +3454,10 @@ img {
 		font-size: 14px;
 	}
 
-	.metabox-holder h3 {
+	.metabox-holder h3.hndle, /* Back-compat for pre-4.4 */
+	.metabox-holder .stuffbox > h3, /* Back-compat for pre-4.4 */
+	.metabox-holder .postbox > h3, /* Back-compat for pre-4.4 */
+	.metabox-holder h2 {
 		padding: 12px;
 	}
 

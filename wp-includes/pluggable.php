@@ -26,8 +26,14 @@ if ( !function_exists('wp_set_current_user') ) :
 function wp_set_current_user($id, $name = '') {
 	global $current_user;
 
-	if ( isset( $current_user ) && ( $current_user instanceof WP_User ) && ( $id == $current_user->ID ) )
+	// If `$id` matches the user who's already current, there's nothing to do.
+	if ( isset( $current_user )
+		&& ( $current_user instanceof WP_User )
+		&& ( $id == $current_user->ID )
+		&& ( null !== $id )
+	) {
 		return $current_user;
+	}
 
 	$current_user = new WP_User( $id, $name );
 
@@ -170,7 +176,7 @@ if ( !function_exists('cache_users') ) :
  *
  * @since 3.0.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param array $user_ids User ID numbers list
  */
@@ -2132,9 +2138,11 @@ if ( !function_exists('wp_rand') ) :
  * Generates a random number
  *
  * @since 2.6.2
+ * @since 4.4.0 Uses PHP7 random_int() or the random_compat library if available.
  *
  * @global string $rnd_value
  * @staticvar string $seed
+ * @staticvar bool $external_rand_source_available
  *
  * @param int $min Lower limit for the generated number
  * @param int $max Upper limit for the generated number
@@ -2142,6 +2150,34 @@ if ( !function_exists('wp_rand') ) :
  */
 function wp_rand( $min = 0, $max = 0 ) {
 	global $rnd_value;
+
+	// Some misconfigured 32bit environments (Entropy PHP, for example) truncate integers larger than PHP_INT_MAX to PHP_INT_MAX rather than overflowing them to floats.
+	$max_random_number = 3000000000 === 2147483647 ? (float) "4294967295" : 4294967295; // 4294967295 = 0xffffffff
+
+	// We only handle Ints, floats are truncated to their integer value.
+	$min = (int) $min;
+	$max = (int) $max;
+
+	// Use PHP's CSPRNG, or a compatible method
+	static $use_random_int_functionality = true;
+	if ( $use_random_int_functionality ) {
+		try {
+			$_max = ( 0 != $max ) ? $max : $max_random_number;
+			// wp_rand() can accept arguements in either order, PHP cannot.
+			$_max = max( $min, $_max );
+			$_min = min( $min, $_max );
+			$val = random_int( $_min, $_max );
+			if ( false !== $val ) {
+				return absint( $val );
+			} else {
+				$use_random_int_functionality = false;
+			}
+		} catch ( Throwable $t ) { 
+			$use_random_int_functionality = false;
+		} catch ( Exception $e ) {
+			$use_random_int_functionality = false;
+		}
+	}
 
 	// Reset $rnd_value after 14 uses
 	// 32(md5) + 40(sha1) + 40(sha1) / 8 = 14 random numbers from $rnd_value
@@ -2166,9 +2202,6 @@ function wp_rand( $min = 0, $max = 0 ) {
 	$rnd_value = substr($rnd_value, 8);
 
 	$value = abs(hexdec($value));
-
-	// Some misconfigured 32bit environments (Entropy PHP, for example) truncate integers larger than PHP_INT_MAX to PHP_INT_MAX rather than overflowing them to floats.
-	$max_random_number = 3000000000 === 2147483647 ? (float) "4294967295" : 4294967295; // 4294967295 = 0xffffffff
 
 	// Reduce the value to be within the min - max range
 	if ( $max != 0 )
@@ -2219,7 +2252,7 @@ if ( !function_exists( 'get_avatar' ) ) :
  * @param string $default    Optional. URL for the default image or a default type. Accepts '404'
  *                           (return a 404 instead of a default image), 'retro' (8bit), 'monsterid'
  *                           (monster), 'wavatar' (cartoon face), 'indenticon' (the "quilt"),
- *                           'mystery', 'mm', or 'mysterman' (The Oyster Man), 'blank' (transparent GIF),
+ *                           'mystery', 'mm', or 'mysteryman' (The Oyster Man), 'blank' (transparent GIF),
  *                           or 'gravatar_default' (the Gravatar logo). Default is the value of the
  *                           'avatar_default' option, with a fallback of 'mystery'.
  * @param string $alt        Optional. Alternative text to use in &lt;img&gt; tag. Default empty.

@@ -10,16 +10,21 @@
  * Display the permalink for the current post.
  *
  * @since 1.2.0
+ * @since 4.4.0 Added the `$post` parameter.
+ *
+ * @param int|WP_Post $post Optional. Post ID or post object. Default is the global `$post`.
  */
-function the_permalink() {
+function the_permalink( $post = 0 ) {
 	/**
 	 * Filter the display of the permalink for the current post.
 	 *
 	 * @since 1.5.0
+	 * @since 4.4.0 Added the `$post` parameter.
 	 *
-	 * @param string $permalink The permalink for the current post.
+	 * @param string      $permalink The permalink for the current post.
+	 * @param int|WP_Post $post      Post ID, WP_Post object, or 0. Default 0.
 	 */
-	echo esc_url( apply_filters( 'the_permalink', get_permalink() ) );
+	echo esc_url( apply_filters( 'the_permalink', get_permalink( $post ), $post ) );
 }
 
 /**
@@ -91,12 +96,13 @@ function permalink_anchor( $mode = 'id' ) {
  *
  * @see get_permalink()
  *
- * @param int|WP_Post $id        Optional. Post ID or post object. Default is the current post.
+ * @param int|WP_Post $post      Optional. Post ID or post object. Default is the global `$post`.
  * @param bool        $leavename Optional. Whether to keep post name or page name. Default false.
+ *
  * @return string|false The permalink URL or false if post does not exist.
  */
-function get_the_permalink( $id = 0, $leavename = false ) {
-	return get_permalink( $id, $leavename );
+function get_the_permalink( $post = 0, $leavename = false ) {
+	return get_permalink( $post, $leavename );
 }
 
 /**
@@ -104,11 +110,11 @@ function get_the_permalink( $id = 0, $leavename = false ) {
  *
  * @since 1.0.0
  *
- * @param int|WP_Post $id        Optional. Post ID or post object. Default current post.
+ * @param int|WP_Post $post      Optional. Post ID or post object. Default is the global `$post`.
  * @param bool        $leavename Optional. Whether to keep post name or page name. Default false.
  * @return string|false The permalink URL or false if post does not exist.
  */
-function get_permalink( $id = 0, $leavename = false ) {
+function get_permalink( $post = 0, $leavename = false ) {
 	$rewritecode = array(
 		'%year%',
 		'%monthnum%',
@@ -123,11 +129,10 @@ function get_permalink( $id = 0, $leavename = false ) {
 		$leavename? '' : '%pagename%',
 	);
 
-	if ( is_object($id) && isset($id->filter) && 'sample' == $id->filter ) {
-		$post = $id;
+	if ( is_object( $post ) && isset( $post->filter ) && 'sample' == $post->filter ) {
 		$sample = true;
 	} else {
-		$post = get_post($id);
+		$post = get_post( $post );
 		$sample = false;
 	}
 
@@ -254,7 +259,7 @@ function get_post_permalink( $id = 0, $leavename = false, $sample = false ) {
 
 	$slug = $post->post_name;
 
-	$draft_or_pending = isset( $post->post_status ) && in_array( $post->post_status, array( 'draft', 'pending', 'auto-draft', 'future' ) );
+	$draft_or_pending = get_post_status( $id ) && in_array( get_post_status( $id ), array( 'draft', 'pending', 'auto-draft', 'future' ) );
 
 	$post_type = get_post_type_object($post->post_type);
 
@@ -1545,7 +1550,7 @@ function get_next_post( $in_same_term = false, $excluded_terms = '', $taxonomy =
  *
  * @since 2.5.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param bool         $in_same_term   Optional. Whether post should be in a same taxonomy term.
  * @param array|string $excluded_terms Optional. Array or comma-separated list of excluded term IDs.
@@ -3672,7 +3677,7 @@ function the_shortlink( $text = '', $title = '', $before = '', $after = '' ) {
  *     @type string $default        URL for the default image or a default type. Accepts '404' (return
  *                                  a 404 instead of a default image), 'retro' (8bit), 'monsterid' (monster),
  *                                  'wavatar' (cartoon face), 'indenticon' (the "quilt"), 'mystery', 'mm',
- *                                  or 'mysterman' (The Oyster Man), 'blank' (transparent GIF), or
+ *                                  or 'mysteryman' (The Oyster Man), 'blank' (transparent GIF), or
  *                                  'gravatar_default' (the Gravatar logo). Default is the value of the
  *                                  'avatar_default' option, with a fallback of 'mystery'.
  *     @type bool   $force_default  Whether to always show the default image, never the Gravatar. Default false.
@@ -3706,7 +3711,7 @@ function get_avatar_url( $id_or_email, $args = null ) {
  *     @type string $default        URL for the default image or a default type. Accepts '404' (return
  *                                  a 404 instead of a default image), 'retro' (8bit), 'monsterid' (monster),
  *                                  'wavatar' (cartoon face), 'indenticon' (the "quilt"), 'mystery', 'mm',
- *                                  or 'mysterman' (The Oyster Man), 'blank' (transparent GIF), or
+ *                                  or 'mysteryman' (The Oyster Man), 'blank' (transparent GIF), or
  *                                  'gravatar_default' (the Gravatar logo). Default is the value of the
  *                                  'avatar_default' option, with a fallback of 'mystery'.
  *     @type bool   $force_default  Whether to always show the default image, never the Gravatar. Default false.

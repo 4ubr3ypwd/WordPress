@@ -1,16 +1,24 @@
 <?php
 /**
- * Posts List Table class.
+ * List Table API: WP_Posts_List_Table class
  *
  * @package WordPress
- * @subpackage List_Table
+ * @subpackage Administration
+ * @since 3.1.0
+ */
+
+/**
+ * Core class used to implement displaying posts in a list table.
+ *
  * @since 3.1.0
  * @access private
+ *
+ * @see WP_List_Table
  */
 class WP_Posts_List_Table extends WP_List_Table {
 
 	/**
-	 * Whether the items should be displayed hierarchically or linearly
+	 * Whether the items should be displayed hierarchically or linearly.
 	 *
 	 * @since 3.1.0
 	 * @var bool
@@ -19,16 +27,16 @@ class WP_Posts_List_Table extends WP_List_Table {
 	protected $hierarchical_display;
 
 	/**
-	 * Holds the number of pending comments for each post
+	 * Holds the number of pending comments for each post.
 	 *
 	 * @since 3.1.0
-	 * @var int
+	 * @var array
 	 * @access protected
 	 */
 	protected $comment_pending_count;
 
 	/**
-	 * Holds the number of posts for this user
+	 * Holds the number of posts for this user.
 	 *
 	 * @since 3.1.0
 	 * @var int
@@ -477,6 +485,15 @@ class WP_Posts_List_Table extends WP_List_Table {
 ?>
 		</div>
 <?php
+		/**
+		 * Fires immediately following the closing "actions" div in the tablenav for the posts
+		 * list table.
+		 *
+		 * @since 4.4.0
+		 * 
+		 * @param string $which The location of the extra table nav markup: 'top' or 'bottom'.
+		 */
+		do_action( 'manage_posts_extra_tablenav', $which );
 	}
 
 	/**
@@ -1315,8 +1332,9 @@ class WP_Posts_List_Table extends WP_List_Table {
 			echo $bulk ? " bulk-edit-row bulk-edit-row-$hclass bulk-edit-{$screen->post_type}" : " quick-edit-row quick-edit-row-$hclass inline-edit-{$screen->post_type}";
 		?>" style="display: none"><td colspan="<?php echo $this->get_column_count(); ?>" class="colspanchange">
 
-		<fieldset class="inline-edit-col-left"><div class="inline-edit-col">
-			<h4><?php echo $bulk ? __( 'Bulk Edit' ) : __( 'Quick Edit' ); ?></h4>
+		<fieldset class="inline-edit-col-left">
+			<legend class="inline-edit-legend"><?php echo $bulk ? __( 'Bulk Edit' ) : __( 'Quick Edit' ); ?></legend>
+			<div class="inline-edit-col">
 	<?php
 
 	if ( post_type_supports( $screen->post_type, 'title' ) ) :

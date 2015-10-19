@@ -18,7 +18,7 @@
  *
  * @since 1.5.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $option  Name of option to retrieve. Expected to not be SQL-escaped.
  * @param mixed  $default Optional. Default value to return if the option does not exist.
@@ -164,7 +164,7 @@ function form_option( $option ) {
  *
  * @since 2.2.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @return array List of all options.
  */
@@ -197,7 +197,7 @@ function wp_load_alloptions() {
  *
  * @since 3.0.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int $site_id Optional site ID for which to query the options. Defaults to the current site.
  */
@@ -237,7 +237,7 @@ function wp_load_core_site_options( $site_id = null ) {
  * @since 1.0.0
  * @since 4.2.0 The `$autoload` parameter was added.
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string      $option   Option name. Expected to not be SQL-escaped.
  * @param mixed       $value    Option value. Must be serializable if non-scalar. Expected to not be SQL-escaped.
@@ -383,7 +383,7 @@ function update_option( $option, $value, $autoload = null ) {
  *
  * @since 1.0.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string         $option      Name of option to add. Expected to not be SQL-escaped.
  * @param mixed          $value       Optional. Option value. Must be serializable if non-scalar. Expected to not be SQL-escaped.
@@ -480,7 +480,7 @@ function add_option( $option, $value = '', $deprecated = '', $autoload = 'yes' )
  *
  * @since 1.2.0
  *
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $option Name of option to remove. Expected to not be SQL-escaped.
  * @return bool True, if option is successfully deleted. False on failure.
@@ -673,7 +673,7 @@ function get_transient( $transient ) {
  *                           172 characters or fewer in length.
  * @param mixed  $value      Transient value. Must be serializable if non-scalar.
  *                           Expected to not be SQL-escaped.
- * @param int    $expiration Optional. Time until expiration in seconds. Default 0.
+ * @param int    $expiration Optional. Time until expiration in seconds. Default 0 (no expiration).
  * @return bool False if value was not set and true if value was set.
  */
 function set_transient( $transient, $value, $expiration = 0 ) {
@@ -702,7 +702,7 @@ function set_transient( $transient, $value, $expiration = 0 ) {
 	 *
 	 * @since 4.4.0
 	 *
-	 * @param int    $expiration Time until expiration in seconds.
+	 * @param int    $expiration Time until expiration in seconds. Use 0 for no expiration.
 	 * @param mixed  $value      New value of transient.
 	 * @param string $transient  Transient name.
 	 */
@@ -748,20 +748,24 @@ function set_transient( $transient, $value, $expiration = 0 ) {
 		 * The dynamic portion of the hook name, `$transient`, refers to the transient name.
 		 *
 		 * @since 3.0.0
+		 * @since 3.6.0 The `$value` and `$expiration` parameters were added.
+		 * @since 4.4.0 The `$transient` parameter was added.
 		 *
-		 * @param mixed $value      Transient value.
-		 * @param int   $expiration Time until expiration in seconds. Default 0.
+		 * @param mixed  $value      Transient value.
+		 * @param int    $expiration Time until expiration in seconds.
+		 * @param string $transient  The name of the transient.
 		 */
-		do_action( 'set_transient_' . $transient, $value, $expiration );
+		do_action( 'set_transient_' . $transient, $value, $expiration, $transient );
 
 		/**
 		 * Fires after the value for a transient has been set.
 		 *
 		 * @since 3.0.0
+		 * @since 3.6.0 The `$value` and `$expiration` parameters were added.
 		 *
 		 * @param string $transient  The name of the transient.
 		 * @param mixed  $value      Transient value.
-		 * @param int    $expiration Time until expiration in seconds. Default 0.
+		 * @param int    $expiration Time until expiration in seconds.
 		 */
 		do_action( 'setted_transient', $transient, $value, $expiration );
 	}
@@ -999,7 +1003,7 @@ function delete_all_user_settings() {
  * @return mixed Value set for the option.
  */
 function get_site_option( $option, $default = false, $deprecated = true ) {
-	return get_network_option( $option, $default );
+	return get_network_option( null, $option, $default );
 }
 
 /**
@@ -1017,7 +1021,7 @@ function get_site_option( $option, $default = false, $deprecated = true ) {
  * @return bool False if the option was not added. True if the option was added.
  */
 function add_site_option( $option, $value ) {
-	return add_network_option( $option, $value );
+	return add_network_option( null, $option, $value );
 }
 
 /**
@@ -1032,7 +1036,7 @@ function add_site_option( $option, $value ) {
  * @return bool True, if succeed. False, if failure.
  */
 function delete_site_option( $option ) {
-	return delete_network_option( $option );
+	return delete_network_option( null, $option );
 }
 
 /**
@@ -1048,7 +1052,7 @@ function delete_site_option( $option ) {
  * @return bool False if value was not updated. True if value was updated.
  */
 function update_site_option( $option, $value ) {
-	return update_network_option( $option, $value );
+	return update_network_option( null, $option, $value );
 }
 
 /**
@@ -1061,13 +1065,17 @@ function update_site_option( $option, $value ) {
  * @global wpdb   $wpdb
  * @global object $current_site
  *
+ * @param int      $network_id ID of the network. Can be null to default to the current network ID.
  * @param string   $option     Name of option to retrieve. Expected to not be SQL-escaped.
  * @param mixed    $default    Optional. Value to return if the option doesn't exist. Default false.
- * @param int|bool $network_id Optional. ID of the network. Defaults to current network ID.
  * @return mixed Value set for the option.
  */
-function get_network_option( $option, $default = false, $network_id = false ) {
+function get_network_option( $network_id, $option, $default = false ) {
 	global $wpdb, $current_site;
+
+	if ( $network_id && ! is_numeric( $network_id ) ) {
+		return false;
+	}
 
 	$network_id = (int) $network_id;
 
@@ -1174,13 +1182,17 @@ function get_network_option( $option, $default = false, $network_id = false ) {
  * @global wpdb   $wpdb
  * @global object $current_site
  *
- * @param  string   $option     Name of option to add. Expected to not be SQL-escaped.
- * @param  mixed    $value      Option value, can be anything. Expected to not be SQL-escaped.
- * @param  int|bool $network_id Optional. ID of the network. Defaults to current network ID.
+ * @param int    $network_id ID of the network. Can be null to default to the current network ID.
+ * @param string $option     Name of option to add. Expected to not be SQL-escaped.
+ * @param mixed  $value      Option value, can be anything. Expected to not be SQL-escaped.
  * @return bool False if option was not added and true if option was added.
  */
-function add_network_option( $option, $value, $network_id = false ) {
+function add_network_option( $network_id, $option, $value ) {
 	global $wpdb, $current_site;
+
+	if ( $network_id && ! is_numeric( $network_id ) ) {
+		return false;
+	}
 
 	$network_id = (int) $network_id;
 
@@ -1215,7 +1227,7 @@ function add_network_option( $option, $value, $network_id = false ) {
 		// Make sure the option doesn't already exist. We can check the 'notoptions' cache before we ask for a db query
 		$notoptions = wp_cache_get( $notoptions_key, 'site-options' );
 		if ( ! is_array( $notoptions ) || ! isset( $notoptions[ $option ] ) ) {
-			if ( false !== get_network_option( $option, false, $network_id ) ) {
+			if ( false !== get_network_option( $network_id, $option, false ) ) {
 				return false;
 			}
 		}
@@ -1280,12 +1292,16 @@ function add_network_option( $option, $value, $network_id = false ) {
  * @global wpdb   $wpdb
  * @global object $current_site
  *
- * @param  string   $option     Name of option to remove. Expected to not be SQL-escaped.
- * @param  int|bool $network_id Optional. ID of the network. Defaults to current network ID.
+ * @param int    $network_id ID of the network. Can be null to default to the current network ID.
+ * @param string $option     Name of option to remove. Expected to not be SQL-escaped.
  * @return bool True, if succeed. False, if failure.
  */
-function delete_network_option( $option, $network_id = false ) {
+function delete_network_option( $network_id, $option ) {
 	global $wpdb, $current_site;
+
+	if ( $network_id && ! is_numeric( $network_id ) ) {
+		return false;
+	}
 
 	$network_id = (int) $network_id;
 
@@ -1358,13 +1374,17 @@ function delete_network_option( $option, $network_id = false ) {
  * @global wpdb   $wpdb
  * @global object $current_site
  *
+ * @param int      $network_id ID of the network. Can be null to default to the current network ID.
  * @param string   $option     Name of option. Expected to not be SQL-escaped.
  * @param mixed    $value      Option value. Expected to not be SQL-escaped.
- * @param int|bool $network_id Optional. ID of the network. Defaults to current network ID.
  * @return bool False if value was not updated and true if value was updated.
  */
-function update_network_option( $option, $value, $network_id = false ) {
+function update_network_option( $network_id, $option, $value ) {
 	global $wpdb, $current_site;
+
+	if ( $network_id && ! is_numeric( $network_id ) ) {
+		return false;
+	}
 
 	$network_id = (int) $network_id;
 
@@ -1375,7 +1395,7 @@ function update_network_option( $option, $value, $network_id = false ) {
 
 	wp_protect_special_option( $option );
 
-	$old_value = get_network_option( $option, false, $network_id );
+	$old_value = get_network_option( $network_id, $option, false );
 
 	/**
 	 * Filter a specific network option before its value is updated.
@@ -1397,7 +1417,7 @@ function update_network_option( $option, $value, $network_id = false ) {
 	}
 
 	if ( false === $old_value ) {
-		return add_network_option( $option, $value, $network_id );
+		return add_network_option( $network_id, $option, $value );
 	}
 
 	$notoptions_key = "$network_id:notoptions";
@@ -1582,7 +1602,7 @@ function get_site_transient( $transient ) {
  * @param string $transient  Transient name. Expected to not be SQL-escaped. Must be
  *                           40 characters or fewer in length.
  * @param mixed  $value      Transient value. Expected to not be SQL-escaped.
- * @param int    $expiration Optional. Time until expiration in seconds. Default 0.
+ * @param int    $expiration Optional. Time until expiration in seconds. Default 0 (no expiration).
  * @return bool False if value was not set and true if value was set.
  */
 function set_site_transient( $transient, $value, $expiration = 0 ) {
@@ -1609,7 +1629,7 @@ function set_site_transient( $transient, $value, $expiration = 0 ) {
 	 *
 	 * @since 4.4.0
 	 *
-	 * @param int    $expiration Time until expiration in seconds.
+	 * @param int    $expiration Time until expiration in seconds. Use 0 for no expiration.
 	 * @param mixed  $value      New value of site transient.
 	 * @param string $transient  Transient name.
 	 */
@@ -1641,7 +1661,7 @@ function set_site_transient( $transient, $value, $expiration = 0 ) {
 		 * @since 4.4.0 The `$transient` parameter was added
 		 *
 		 * @param mixed  $value      Site transient value.
-		 * @param int    $expiration Time until expiration in seconds. Default 0.
+		 * @param int    $expiration Time until expiration in seconds.
 		 * @param string $transient  Transient name.
 		 */
 		do_action( 'set_site_transient_' . $transient, $value, $expiration, $transient );
@@ -1653,7 +1673,7 @@ function set_site_transient( $transient, $value, $expiration = 0 ) {
 		 *
 		 * @param string $transient  The name of the site transient.
 		 * @param mixed  $value      Site transient value.
-		 * @param int    $expiration Time until expiration in seconds. Default 0.
+		 * @param int    $expiration Time until expiration in seconds.
 		 */
 		do_action( 'setted_site_transient', $transient, $value, $expiration );
 	}
