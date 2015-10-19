@@ -271,7 +271,7 @@ function get_search_form( $echo = true ) {
  * @param bool   $echo     Default to echo and not return the link.
  * @return string|void String when retrieving.
  */
-function wp_loginout($redirect = '', $echo = true) {
+function wp_loginout( $redirect = '', $echo = true ) {
 	if ( ! is_user_logged_in() ) {
 		 /**
 		  * Filter the wording for Logging In
@@ -281,7 +281,7 @@ function wp_loginout($redirect = '', $echo = true) {
 		  * @var string The filtered text shown when logging in.
 		  */
 		$login = apply_filters( 'login_text', __( 'Log in' ) );
-		$link = '<a href="' . esc_url( wp_login_url( $redirect) ) . '">' . $login . '</a>';
+		$link = '<a href="' . esc_url( wp_login_url( $redirect ) ) . '">' . $login . '</a>';
 	} else {
 		/**
 		 * Filter the wording for Logging Out
@@ -291,7 +291,7 @@ function wp_loginout($redirect = '', $echo = true) {
 		 * @var string The filtered text shown when logging out.
 		 */
 		$logout = apply_filters( 'logout_text', __( 'Log out' ) );
-		$link = '<a href="' . esc_url( wp_logout_url( $redirect) ) . '">' . $logout . '</a>';
+		$link = '<a href="' . esc_url( wp_logout_url( $redirect ) ) . '">' . $logout . '</a>';
 	}
 
 	if ( $echo ) {
