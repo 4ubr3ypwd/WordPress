@@ -274,7 +274,7 @@ function get_search_form( $echo = true ) {
 function wp_loginout( $redirect = '', $echo = true ) {
 	if ( ! is_user_logged_in() ) {
 		 /**
-		  * Filter the wording for Logging In
+		  * Filter the "Login" text.
 		  *
 		  * @since 4.3.1
 		  *
@@ -284,7 +284,7 @@ function wp_loginout( $redirect = '', $echo = true ) {
 		$link = '<a href="' . esc_url( wp_login_url( $redirect ) ) . '">' . $login . '</a>';
 	} else {
 		/**
-		 * Filter the wording for Logging Out
+		 * Filter the "Logout" text.
 		 *
 		 * @since 4.3.1
 		 *
