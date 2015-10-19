@@ -74,6 +74,7 @@ if ( $action ) {
 			check_admin_referer('bulk-plugins');
 
 			$plugins = isset( $_POST['checked'] ) ? (array) $_POST['checked'] : array();
+			set_transient( 'selected_plugins', $plugins ); // Store the list of selected plugins
 
 			if ( is_network_admin() ) {
 				foreach ( $plugins as $i => $plugin ) {
@@ -92,7 +93,7 @@ if ( $action ) {
 			}
 
 			if ( empty($plugins) ) {
-				wp_redirect( self_admin_url("plugins.php?plugin_status=$status&paged=$page&s=$s") );
+				wp_redirect( self_admin_url("plugins.php?plugin_status=$status&paged=$page&s=$s&prev_action=$action") );
 				exit;
 			}
 
@@ -114,7 +115,7 @@ if ( $action ) {
 				update_site_option( 'recently_activated', $recent );
 			}
 
-			wp_redirect( self_admin_url("plugins.php?activate-multi=true&plugin_status=$status&paged=$page&s=$s") );
+			wp_redirect( self_admin_url("plugins.php?activate-multi=true&plugin_status=$status&paged=$page&s=$s&prev_action=$action") );
 			exit;
 
 		case 'update-selected' :
