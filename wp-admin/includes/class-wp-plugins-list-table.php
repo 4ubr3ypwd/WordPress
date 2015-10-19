@@ -494,6 +494,9 @@ class WP_Plugins_List_Table extends WP_List_Table {
 		$context = $status;
 		$screen = $this->screen;
 
+		// Get the previously selected plugins.
+		$selected = isset( $_GET['prev_action'] ) ? get_transient( 'selected_plugins' ) : array();
+
 		// Pre-order.
 		$actions = array(
 			'deactivate' => '',
@@ -665,8 +668,9 @@ class WP_Plugins_List_Table extends WP_List_Table {
 		if ( $restrict_network_active || $restrict_network_only || in_array( $status, array( 'mustuse', 'dropins' ) ) ) {
 			$checkbox = '';
 		} else {
+			$checked = in_array( $plugin_file, $selected ) ? 'checked' : ''; // Determine if the plugin was previsouly checked.
 			$checkbox = "<label class='screen-reader-text' for='" . $checkbox_id . "' >" . sprintf( __( 'Select %s' ), $plugin_data['Name'] ) . "</label>"
-				. "<input type='checkbox' name='checked[]' value='" . esc_attr( $plugin_file ) . "' id='" . $checkbox_id . "' />";
+				. "<input type='checkbox' $checked name='checked[]' value='" . esc_attr( $plugin_file ) . "' id='" . $checkbox_id . "' />";
 		}
 		if ( 'dropins' != $context ) {
 			$description = '<p>' . ( $plugin_data['Description'] ? $plugin_data['Description'] : '&nbsp;' ) . '</p>';
