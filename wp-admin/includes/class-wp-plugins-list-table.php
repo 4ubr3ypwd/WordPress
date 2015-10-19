@@ -495,7 +495,12 @@ class WP_Plugins_List_Table extends WP_List_Table {
 		$screen = $this->screen;
 
 		// Get the previously selected plugins.
-		$selected = isset( $_GET['prev_action'] ) ? get_transient( 'selected_plugins' ) : array();
+		$prev_action = isset( $_GET['prev_action'] ) ? $_GET['prev_action'] : false;
+		// What actions constitute using the transient?
+		$prev_selected_actions = array(
+			'activate-selected',
+		);
+		$selected = ( $prev_action && in_array( $prev_action, $prev_selected_actions ) ) ? get_transient( 'selected_plugins' ) : array();
 
 		// Pre-order.
 		$actions = array(
